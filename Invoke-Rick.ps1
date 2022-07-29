@@ -54,6 +54,9 @@ function Get-Frames {
         [ValidateNotNullOrEmpty()]
         [string]$DestinationPath
     )
+    if (!(Test-Path $DestinationPath)) {
+        New-Item -Path $DestinationPath -ItemType "directory"
+    }
     Remove-Item "$DestinationPath\*" -ErrorAction SilentlyContinue
 
     $zip_path = (Join-Path $DestinationPath "Rick.zip")
@@ -115,12 +118,14 @@ try {
             Write-Verbose "Passed EndTime, exiting..."
             break
         }
+
         if ((Get-Date) -gt $checkpoint.AddSeconds($FakeoutDelay.TotalSeconds)) {
             Write-Verbose "Hit $FakeoutDelay, restoring to original and sleeping for $FakeoutDuration."
             Set-WallPaper $original_wallpaper
             Start-Sleep $FakeoutDuration.TotalSeconds
             $checkpoint = Get-Date
         }
+        
         Set-WallPaper $images[$index]
         $index = ($index + 1) % $images.Length
         Start-Sleep $FrameDelay.TotalSeconds
