@@ -28,7 +28,7 @@
 param(
     [Parameter(HelpMessage = "Location of zip containing rickroll images. Default = imgur zip.")] # Location of zip containing rickroll images. Default = imgur zip.
     [ValidateNotNullOrEmpty()]
-    [string]$URL = "https://zip.imgur.com/c36c1c4032df86f1f667e30665186a98ef35b4e0f632b0fa5e3ee3e8bfd6907c",
+    [string]$URL = "https://imgur.com/a/QTMaCss/zip",
     [ValidateNotNullOrEmpty()]
     [Parameter(HelpMessage = "Location to save image frames. Default = C:\Windows\Temp\Rick.")] # Location to save image frames. Default = C:\Windows\Temp\Rick.
     [string]$ImagePath = "C:\Windows\Temp\Rick\",
@@ -36,12 +36,16 @@ param(
     [Parameter(HelpMessage = "Delay between each frame. Default = 1 second.")] # Delay between each frame. Default = 1 second.
     [timespan]$FrameDelay = (New-TimeSpan -Seconds 1),
     [ValidateNotNullOrEmpty()]
-    [Parameter(HelpMessage = "How long to rickroll until returning to the user's normal background. Default = 1 minute.")] # How long to rickroll until returning to the user's normal background. Default = 1 minute.
-    [timespan]$FakeoutDelay = (New-TimeSpan -Minutes 1),
+    [Parameter(HelpMessage = "How long to rickroll until returning to the user's normal background. Default = 5 minutes.")] # How long to rickroll until returning to the user's normal background. Default = 1 minute.
+    [timespan]$FakeoutDelay = (New-TimeSpan -Minutes 5),
     [Parameter(HelpMessage = "How long to remain on the user's normal background during a fakeout. Default = 5 minutes.")] # How long to remain on the user's normal background during a fakeout. Default = 5 minutes.
     [timespan]$FakeoutDuration = (New-TimeSpan -Minutes 5),
     [Parameter(HelpMessage = "Absolute time to kill Invoke-Rick at. Default = run forever.")] # Absolute time to kill Invoke-Rick at. Default = run forever.
-    [datetime]$EndTime
+    [datetime]$EndTime,
+    [Parameter(HelpMessage = "Restore user's normal background if mouse movement is detected. Polling rate is linked with -FrameDelay.")] # Restore user's normal background if mouse movement is detected. Polling rate is linked with -FrameDelay.
+    [switch]$WatchMouse,
+    [Parameter(HelpMessage = "How long to remain on the user's normal background after detecting movement from the mouse or keyboard. Default = 1 minute.")] # How long to remain on the user's normal background after detecting movement from the mouse or keyboard. Default = 1 minute
+    [timespan]$ActivityDelay = (New-Timespan -Minutes 1)
 )
 
 function Get-Frames {
@@ -124,6 +128,18 @@ try {
             Set-WallPaper $original_wallpaper
             Start-Sleep $FakeoutDuration.TotalSeconds
             $checkpoint = Get-Date
+        }
+
+        if ($WatchMouse) {
+            Add-Type -AssemblyName System.Windows.Forms
+            $new_position = [System.Windows.Forms.Cursor]::Position
+            Write-Verbose "Current Mouse Pos ($new_position) | Last Mouse Pos ($last_position)"
+            if ($null -ne $last_position -and $new_position -ne $last_position) {
+                Write-Host "Detected mouse movement, restoring to original and sleeping for $ActivityDelay."
+                Set-WallPaper $original_wallpaper
+                Start-Sleep $ActivityDelay.TotalSeconds
+            }
+            $last_position = [System.Windows.Forms.Cursor]::Position
         }
         
         Set-WallPaper $images[$index]
