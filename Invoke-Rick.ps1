@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$ZipPath,
+    [string]$URL = "https://zip.imgur.com/c36c1c4032df86f1f667e30665186a98ef35b4e0f632b0fa5e3ee3e8bfd6907c",
     [string]$ImagePath = "C:\Windows\Temp\Rick\",
     [timespan]$FrameDelay = (New-TimeSpan -Seconds 1),
     [timespan]$FakeoutDelay = (New-TimeSpan -Minutes 1),
@@ -8,26 +8,38 @@ param(
     [datetime]$EndTime
 )
 
-function Load-Frames {
+function Get-Frames {
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$DownloadPath,
+        [string]$URL,
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$DestinationPath,
-        [string]$URL
+        [string]$DestinationPath
     )
-    # download from internet
+    Remove-Item "$DestinationPath\*" -ErrorAction SilentlyContinue
+
+    $zip_path = (Join-Path $DestinationPath "Rick.zip")
+    try {
+        Write-Verbose "Downloading ZIP..."
+        $ProgressPreference = "SilentlyContinue"
+        Invoke-WebRequest -Uri $URL -OutFile $zip_path -ErrorAction Stop | Out-Null
+    }
+    catch {
+        throw $Error[0]
+    }
+
     Write-Verbose "Expanding ZIP in $DestinationPath."
     try {
-        Expand-Archive -Path $DownloadPath -DestinationPath $ImagePath -Force -ErrorAction Stop | Out-Null
+        Expand-Archive -Path $zip_path -DestinationPath $DestinationPath -Force -ErrorAction Stop | Out-Null
         Write-Verbose "Expand success."
     }
     catch {
-        $Error[0]
-        Write-Verbose "Expand failed."
+        throw $Error[0]
     }
+
+    (Get-ChildItem $ImagePath).FullName
 }
 
 function Set-WallPaper {
@@ -58,11 +70,8 @@ public class Params
 try {
     $original_wallpaper = (Get-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name Wallpaper).Wallpaper
     Write-Verbose "Original wallpaper: $original_wallpaper"
-
-    Write-Verbose "Downloading ZIP and loading images..."
-    Load-Frames -DownloadPath $ZipPath -DestinationPath $ImagePath
-
-    $images = (Get-ChildItem $ImagePath).FullName
+    
+    $images = Get-Frames -URL $URL -DestinationPath $ImagePath -ErrorAction Stop
     Write-Verbose "Found $($images.Count) images. Starting..."
     $checkpoint, $index = (Get-Date), 0
     while ($true) {
@@ -80,6 +89,10 @@ try {
         $index = ($index + 1) % $images.Length
         Start-Sleep $FrameDelay.TotalSeconds
     }
+}
+catch {
+    Write-Verbose "Hit error, terminating:"
+    Write-Verbose $Error[0].ToString()
 }
 finally {
     Set-WallPaper $original_wallpaper
