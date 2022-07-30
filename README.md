@@ -1,5 +1,10 @@
 # Invoke-Rick
-Rickroll someone's Windows desktop, restoring their original background occasionally to drive them mad.
+
+<h4 align="center">
+Rickroll someone's Windows desktop, restoring their original background occasionally to drive them mad.</h4>
+<p align="center">
+  <img src="demo.gif"/>
+</p>
 
 Optionally restore the original background on mouse and/or keyboard activity.
 
