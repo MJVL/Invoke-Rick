@@ -3,17 +3,25 @@ Rickroll someone's Windows desktop, restoring their original background occasion
 
 Optionally restore the original background on mouse and/or keyboard activity.
 
+For more fun, set this on auto-run through use of the registry, services, injecting into PowerShell modules, or more.
+
 **Disclaimer:** I'm not responsible if this annoys blue or any other end user. I do not have ownership over any referenced imgur images or URLs, use at your own risk!
 
 ## One-liner
+PowerShell
 ```PowerShell
-iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
+Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
 ```
+Cmd
+```
+powershell.exe -ExecutionPolicy Bypass -NonInteractive -c "iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1'))"
+```
+
 
 ## Usage
 ```
 SYNTAX
-    C:\Users\micha\Documents\Development\Invoke-Rick\Invoke-Rick.ps1 [[-URL] <String>] [[-ImagePath] <String>]
+    .\Invoke-Rick.ps1 [[-URL] <String>] [[-ImagePath] <String>]
     [[-FrameDelay] <TimeSpan>] [[-FakeoutDelay] <TimeSpan>] [[-FakeoutDuration] <TimeSpan>] [[-EndTime] <DateTime>]
     [-WatchMouse] [-WatchKeyboard] [[-ActivityDelay] <TimeSpan>] [<CommonParameters>]
 
@@ -51,14 +59,13 @@ PARAMETERS
 
     -------------------------- EXAMPLE 1 --------------------------
 
-    PS>iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/m
-    ain/Invoke-Rick.ps1"))
+    PS>iex powershell.exe -ExecutionPolicy Bypass -NonInteractive -c "iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1'))"
         Download and run this script remotely.
 
     -------------------------- EXAMPLE 2 --------------------------
 
-    PS>.\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard
-        Rickroll, restoring the original background temporarily if keyboard or mouse activity is detected.
+    PS>.\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard -ActivityDelay (New-TimeSpan -Seconds 30)
+        Rickroll, restoring the original background for 30 seconds if keyboard or mouse activity is detected.
 
     -------------------------- EXAMPLE 3 --------------------------
 

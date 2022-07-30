@@ -9,11 +9,11 @@
 
     Author: @MJVL (https://github.com/MJVL)
 .EXAMPLE
-    PS> iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
+    PS> Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
         Download and run this script remotely.
 .EXAMPLE 
-    PS> .\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard
-        Rickroll, restoring the original background temporarily if keyboard or mouse activity is detected.
+    PS>.\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard -ActivityDelay (New-TimeSpan -Seconds 30)
+        Rickroll, restoring the original background for 30 seconds if keyboard or mouse activity is detected.
 .EXAMPLE 
     PS> .\Invoke-Rick.ps1 -FakeoutDuration (New-TimeSpan -Minutes 2) -EndTime ((Get-Date).AddMinutes(5))
         Rickroll for 5 minutes, showing the user's original background every 2 minutes.
@@ -129,8 +129,7 @@ public static extern short GetAsyncKeyState(int virtualKeyCode);
 "@ -IgnoreWarnings -Name KeypressWatcher -Namespace Keyboard
     }
     1..254 | ForEach-Object {
-        $state = [Keyboard.KeypressWatcher]::GetAsyncKeyState($_)
-        if ($state -eq -32767) {
+        if ([Keyboard.KeypressWatcher]::GetAsyncKeyState($_) -eq -32767) {
             return $_
         }
     }
@@ -166,18 +165,17 @@ try {
                 Set-Wallpaper $original_wallpaper
                 Start-Sleep $ActivityDelay.TotalSeconds
             }
-            $last_position = [System.Windows.Forms.Cursor]::Position
+            $last_position = $new_position
         }
 
         if ($WatchKeyboard) {
             $new_keypress = Get-Keypress
-            Write-Verbose "Current Keypress ($new_keypress) | Last Keypress ($last_keypress)"
             if ($null -ne $last_keypress -and $new_keypress -ne 0 -and $new_keypress -ne $last_keypress) {
                 Write-Verbose "Detected keypress, restoring to original and sleeping for $ActivityDelay."
                 Set-Wallpaper $original_wallpaper
                 Start-Sleep $ActivityDelay.TotalSeconds
             }
-            $last_keypress = Get-Keypress
+            $last_keypress = $new_keypress
         }
         Set-Wallpaper $images[$index]
         $index = ($index + 1) % $images.Length
@@ -187,7 +185,7 @@ try {
 catch {
     Write-Verbose "Hit error, terminating:"
     Write-Verbose $Error[0].ToString()
-}asd
+}
 finally {
     Remove-Item "$ImagePath\*" -ErrorAction SilentlyContinue
     Set-Wallpaper $original_wallpaper
