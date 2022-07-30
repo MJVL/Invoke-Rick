@@ -9,11 +9,14 @@
 
     Author: @MJVL (https://github.com/MJVL)
 .EXAMPLE
-    PS> iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
-        Download and run this script remotely. 
+    PS> Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
+        Download and run this script remotely.
+.EXAMPLE 
+    PS>.\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard -ActivityDelay (New-TimeSpan -Seconds 30)
+        Rickroll, restoring the original background for 30 seconds if keyboard or mouse activity is detected.
 .EXAMPLE 
     PS> .\Invoke-Rick.ps1 -FakeoutDuration (New-TimeSpan -Minutes 2) -EndTime ((Get-Date).AddMinutes(5))
-        Rickroll for 5 minutes, showing the user's original desktop every 2 minutes.
+        Rickroll for 5 minutes, showing the user's original background every 2 minutes.
 .EXAMPLE
     PS> .\Invoke-Rick.ps1 -Verbose
         Show debug information.
@@ -28,7 +31,7 @@
 param(
     [Parameter(HelpMessage = "Location of zip containing rickroll images. Default = imgur zip.")] # Location of zip containing rickroll images. Default = imgur zip.
     [ValidateNotNullOrEmpty()]
-    [string]$URL = "https://zip.imgur.com/c36c1c4032df86f1f667e30665186a98ef35b4e0f632b0fa5e3ee3e8bfd6907c",
+    [string]$URL = "https://imgur.com/a/QTMaCss/zip",
     [ValidateNotNullOrEmpty()]
     [Parameter(HelpMessage = "Location to save image frames. Default = C:\Windows\Temp\Rick.")] # Location to save image frames. Default = C:\Windows\Temp\Rick.
     [string]$ImagePath = "C:\Windows\Temp\Rick\",
@@ -36,12 +39,21 @@ param(
     [Parameter(HelpMessage = "Delay between each frame. Default = 1 second.")] # Delay between each frame. Default = 1 second.
     [timespan]$FrameDelay = (New-TimeSpan -Seconds 1),
     [ValidateNotNullOrEmpty()]
-    [Parameter(HelpMessage = "How long to rickroll until returning to the user's normal background. Default = 1 minute.")] # How long to rickroll until returning to the user's normal background. Default = 1 minute.
-    [timespan]$FakeoutDelay = (New-TimeSpan -Minutes 1),
-    [Parameter(HelpMessage = "How long to remain on the user's normal background during a fakeout. Default = 5 minutes.")] # How long to remain on the user's normal background during a fakeout. Default = 5 minutes.
+    [Parameter(HelpMessage = "How long to rickroll until returning to the normal background. Default = 5 minutes.")] # How long to rickroll until returning to the normal background. Default = 1 minute.
+    [timespan]$FakeoutDelay = (New-TimeSpan -Minutes 5),
+    [Parameter(HelpMessage = "How long to remain on the normal background during a fakeout. Default = 5 minutes.")] # How long to remain on the normal background during a fakeout. Default = 5 minutes.
+    [ValidateNotNullOrEmpty()]
     [timespan]$FakeoutDuration = (New-TimeSpan -Minutes 5),
     [Parameter(HelpMessage = "Absolute time to kill Invoke-Rick at. Default = run forever.")] # Absolute time to kill Invoke-Rick at. Default = run forever.
-    [datetime]$EndTime
+    [ValidateNotNullOrEmpty()]
+    [datetime]$EndTime,
+    [Parameter(HelpMessage = "Restore normal background if mouse movement is detected. Polling rate is linked with -FrameDelay.")] # Restore normal background if mouse movement is detected. Polling rate is linked with -FrameDelay.
+    [switch]$WatchMouse,
+    [Parameter(HelpMessage = "Restore normal background if keypresses are detected. Polling rate is linked with -FrameDelay.")] # Restore normal background if keypresses is detected. Polling rate is linked with -FrameDelay.
+    [switch]$WatchKeyboard,
+    [Parameter(HelpMessage = "How long to remain on the normal background after detecting movement from the mouse or keyboard. Default = 1 minute.")] # How long to remain on the normal background after detecting movement from the mouse or keyboard. Default = 1 minute
+    [ValidateNotNullOrEmpty()]
+    [timespan]$ActivityDelay = (New-Timespan -Minutes 1)
 )
 
 function Get-Frames {
@@ -81,7 +93,8 @@ function Get-Frames {
     (Get-ChildItem $ImagePath).FullName
 }
 
-function Set-WallPaper {
+function Set-Wallpaper {
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -106,6 +119,23 @@ public class Params
     [Params]::SystemParametersInfo($SPI_SETDESKWALLPAPER, 0, $Path, $fWinIni) | Out-Null
 }
 
+function Get-Keypress {
+    [CmdletBinding()]
+    param()
+    if (!(([System.Management.Automation.PSTypeName]"Keyboard.KeypressWatcher").Type)) {
+        Add-Type -MemberDefinition @"
+[DllImport("user32.dll", CharSet=CharSet.Auto, ExactSpelling=true)] 
+public static extern short GetAsyncKeyState(int virtualKeyCode); 
+"@ -IgnoreWarnings -Name KeypressWatcher -Namespace Keyboard
+    }
+    1..254 | ForEach-Object {
+        if ([Keyboard.KeypressWatcher]::GetAsyncKeyState($_) -eq -32767) {
+            return $_
+        }
+    }
+    0
+}
+
 try {
     $original_wallpaper = (Get-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name Wallpaper).Wallpaper
     Write-Verbose "Original wallpaper: $original_wallpaper"
@@ -121,12 +151,33 @@ try {
 
         if ((Get-Date) -gt $checkpoint.AddSeconds($FakeoutDelay.TotalSeconds)) {
             Write-Verbose "Hit $FakeoutDelay, restoring to original and sleeping for $FakeoutDuration."
-            Set-WallPaper $original_wallpaper
+            Set-Wallpaper $original_wallpaper
             Start-Sleep $FakeoutDuration.TotalSeconds
             $checkpoint = Get-Date
         }
-        
-        Set-WallPaper $images[$index]
+
+        if ($WatchMouse) {
+            Add-Type -AssemblyName System.Windows.Forms
+            $new_position = [System.Windows.Forms.Cursor]::Position
+            Write-Verbose "Current Mouse Pos ($new_position) | Last Mouse Pos ($last_position)"
+            if ($null -ne $last_position -and $new_position -ne $last_position) {
+                Write-Verbose "Detected mouse movement, restoring to original and sleeping for $ActivityDelay."
+                Set-Wallpaper $original_wallpaper
+                Start-Sleep $ActivityDelay.TotalSeconds
+            }
+            $last_position = $new_position
+        }
+
+        if ($WatchKeyboard) {
+            $new_keypress = Get-Keypress
+            if ($null -ne $last_keypress -and $new_keypress -ne 0 -and $new_keypress -ne $last_keypress) {
+                Write-Verbose "Detected keypress, restoring to original and sleeping for $ActivityDelay."
+                Set-Wallpaper $original_wallpaper
+                Start-Sleep $ActivityDelay.TotalSeconds
+            }
+            $last_keypress = $new_keypress
+        }
+        Set-Wallpaper $images[$index]
         $index = ($index + 1) % $images.Length
         Start-Sleep $FrameDelay.TotalSeconds
     }
@@ -137,5 +188,5 @@ catch {
 }
 finally {
     Remove-Item "$ImagePath\*" -ErrorAction SilentlyContinue
-    Set-WallPaper $original_wallpaper
+    Set-Wallpaper $original_wallpaper
 }
