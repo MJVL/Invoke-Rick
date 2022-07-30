@@ -9,7 +9,7 @@
 
     Author: @MJVL (https://github.com/MJVL)
 .EXAMPLE
-    PS> Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
+    PS> Set-ExecutionPolicy Bypass -Scope Process -Force; iwr https://raw.githubusercontent.com/MJVL/Invoke-Rick/main/Invoke-Rick.ps1 -OutFile Invoke-Rick.ps1; .\Invoke-Rick.ps1
         Download and run this script remotely.
 .EXAMPLE 
     PS>.\Invoke-Rick.ps1 -WatchMouse -WatchKeyboard -ActivityDelay (New-TimeSpan -Seconds 30)

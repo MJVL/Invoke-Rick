@@ -10,11 +10,11 @@ For more fun, set this on auto-run through use of the registry, services, inject
 ## One-liner
 PowerShell
 ```PowerShell
-Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1"))
+Set-ExecutionPolicy Bypass -Scope Process -Force; iwr https://raw.githubusercontent.com/MJVL/Invoke-Rick/main/Invoke-Rick.ps1 -OutFile Invoke-Rick.ps1; .\Invoke-Rick.ps1
 ```
 Cmd
 ```
-powershell.exe -ExecutionPolicy Bypass -NonInteractive -c "iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/MJVL/Invoke-Rick/blob/main/Invoke-Rick.ps1'))"
+powershell.exe -ExecutionPolicy Bypass -NonInteractive -c "iwr https://raw.githubusercontent.com/MJVL/Invoke-Rick/main/Invoke-Rick.ps1 -OutFile Invoke-Rick.ps1; .\Invoke-Rick.ps1"
 ```
 
 
