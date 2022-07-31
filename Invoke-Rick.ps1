@@ -76,13 +76,7 @@ function Get-Frames {
         Write-Verbose "Downloading ZIP..."
         $ProgressPreference = "SilentlyContinue"
         Invoke-WebRequest -Uri $URL -OutFile $zip_path -ErrorAction Stop | Out-Null
-    }
-    catch {
-        throw $Error[0]
-    }
-
-    Write-Verbose "Expanding ZIP in $DestinationPath."
-    try {
+        Write-Verbose "Expanding ZIP in $DestinationPath."
         Expand-Archive -Path $zip_path -DestinationPath $DestinationPath -Force -ErrorAction Stop | Out-Null
         Write-Verbose "Expand success."
     }
