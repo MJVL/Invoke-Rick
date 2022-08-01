@@ -10,7 +10,7 @@ Optionally restore the original background on mouse and/or keyboard activity.
 
 For more fun, set this on auto-run through use of the registry, services, injecting into PowerShell modules, or more.
 
-**Disclaimer:** I'm not responsible if this annoys blue or any other end user. I do not have ownership over any referenced imgur images or URLs, use at your own risk!
+**Disclaimer:** I'm not responsible if this annoys blue or any other end user. I do not claim ownership over any referenced images or URLs, use at your own risk!
 
 ## One-liner
 PowerShell

@@ -5,7 +5,7 @@
     Rickroll someone's Windows desktop, restoring their original background occasionally to drive them mad.
 
     Disclaimer: I'm not responsible if this annoys blue or any other end user. 
-                I do not have ownership over any referenced imgur images or URLs, use at your own risk!
+                I do not claim ownership over any referenced images or URLs, use at your own risk!
 
     Author: @MJVL (https://github.com/MJVL)
 .EXAMPLE
@@ -29,9 +29,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(HelpMessage = "Location of zip containing rickroll images. Default = imgur zip.")] # Location of zip containing rickroll images. Default = imgur zip.
+    [Parameter(HelpMessage = "Location of zip containing rickroll images. Default = github.io zip.")] # Location of zip containing rickroll images. Default = github.io zip.
     [ValidateNotNullOrEmpty()]
-    [string]$URL = "https://imgur.com/a/QTMaCss/zip",
+    [string]$URL = "https://mjvl.github.io/misc-files/Album.zip",
     [ValidateNotNullOrEmpty()]
     [Parameter(HelpMessage = "Location to save image frames. Default = C:\Windows\Temp\Rick.")] # Location to save image frames. Default = C:\Windows\Temp\Rick.
     [string]$ImagePath = "C:\Windows\Temp\Rick\",
