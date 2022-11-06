@@ -71,13 +71,13 @@ function Get-Frames {
     }
     Remove-Item "$DestinationPath\*" -ErrorAction SilentlyContinue
 
-    $zip_path = (Join-Path $DestinationPath "Rick.zip")
+    $zipPath = (Join-Path $DestinationPath "Rick.zip")
     try {
         Write-Verbose "Downloading ZIP..."
         $ProgressPreference = "SilentlyContinue"
-        Invoke-WebRequest -Uri $URL -OutFile $zip_path -ErrorAction Stop | Out-Null
+        Invoke-WebRequest -Uri $URL -OutFile $zipPath -ErrorAction Stop | Out-Null
         Write-Verbose "Expanding ZIP in $DestinationPath."
-        Expand-Archive -Path $zip_path -DestinationPath $DestinationPath -Force -ErrorAction Stop | Out-Null
+        Expand-Archive -Path $zipPath -DestinationPath $DestinationPath -Force -ErrorAction Stop | Out-Null
         Write-Verbose "Expand success."
     }
     catch {
@@ -131,8 +131,8 @@ public static extern short GetAsyncKeyState(int virtualKeyCode);
 }
 
 try {
-    $original_wallpaper = (Get-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name Wallpaper).Wallpaper
-    Write-Verbose "Original wallpaper: $original_wallpaper"
+    $originalWallpaper = (Get-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name Wallpaper).Wallpaper
+    Write-Verbose "Original wallpaper: $originalWallpaper"
     
     $images = Get-Frames -URL $URL -DestinationPath $ImagePath -ErrorAction Stop
     Write-Verbose "Found $($images.Count) images, starting..."
@@ -145,31 +145,31 @@ try {
 
         if ((Get-Date) -gt $checkpoint.AddSeconds($FakeoutDelay.TotalSeconds)) {
             Write-Verbose "Hit $FakeoutDelay, restoring to original and sleeping for $FakeoutDuration."
-            Set-Wallpaper $original_wallpaper
+            Set-Wallpaper $originalWallpaper
             Start-Sleep $FakeoutDuration.TotalSeconds
             $checkpoint = Get-Date
         }
 
         if ($WatchMouse) {
             Add-Type -AssemblyName System.Windows.Forms
-            $new_position = [System.Windows.Forms.Cursor]::Position
-            Write-Verbose "Current Mouse Pos ($new_position) | Last Mouse Pos ($last_position)"
-            if ($null -ne $last_position -and $new_position -ne $last_position) {
+            $newPosition = [System.Windows.Forms.Cursor]::Position
+            Write-Verbose "Current Mouse Pos ($newPosition) | Last Mouse Pos ($lastPosition)"
+            if ($null -ne $lastPosition -and $newPosition -ne $lastPosition) {
                 Write-Verbose "Detected mouse movement, restoring to original and sleeping for $ActivityDelay."
-                Set-Wallpaper $original_wallpaper
+                Set-Wallpaper $originalWallpaper
                 Start-Sleep $ActivityDelay.TotalSeconds
             }
-            $last_position = $new_position
+            $lastPosition = $newPosition
         }
 
         if ($WatchKeyboard) {
-            $new_keypress = Get-Keypress
-            if ($null -ne $last_keypress -and $new_keypress -ne 0 -and $new_keypress -ne $last_keypress) {
+            $newKeypress = Get-Keypress
+            if ($null -ne $lastKeypress -and $newKeypress -ne 0 -and $newKeypress -ne $lastKeypress) {
                 Write-Verbose "Detected keypress, restoring to original and sleeping for $ActivityDelay."
-                Set-Wallpaper $original_wallpaper
+                Set-Wallpaper $originalWallpaper
                 Start-Sleep $ActivityDelay.TotalSeconds
             }
-            $last_keypress = $new_keypress
+            $lastKeypress = $newKeypress
         }
         Set-Wallpaper $images[$index]
         $index = ($index + 1) % $images.Length
@@ -182,5 +182,5 @@ catch {
 }
 finally {
     Remove-Item "$ImagePath\*" -ErrorAction SilentlyContinue
-    Set-Wallpaper $original_wallpaper
+    Set-Wallpaper $originalWallpaper
 }
